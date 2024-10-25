@@ -46,35 +46,55 @@ if [[ "${DOWNLOAD_METHOD}" == "Depot Downloader" ]]; then
 
         if [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
             echo "Newer version available. Updating DepotDownloader..."
+
             # Create a temporary directory for download
             cd /tmp
+
             # Download the latest version of DepotDownloader
             curl -sSL -o DepotDownloader.zip https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_${LATEST_VERSION}/DepotDownloader-linux-x64.zip
+
             # Unzip the DepotDownloader package to /home/container
-            unzip DepotDownloader.zip -d /home/container
-            # Clean up temporary files
-            rm -rf /tmp/*
-            # Set permissions
-            chmod +x /home/container/DepotDownloader
-            Warn "DepotDownloader updated to version $LATEST_VERSION. We need to restart your system in order to complete the install..."
-            exit 0
+            if unzip DepotDownloader.zip -d /home/container; then
+                # Clean up temporary files
+                rm -rf /tmp/*
+
+                # Set permissions
+                chmod +x /home/container/DepotDownloader
+
+                Warn "DepotDownloader updated to version $LATEST_VERSION. We need to restart your system in order to complete the install..."
+                exit 0
+            else
+                echo "Failed to unzip DepotDownloader. Exiting."
+                rm -rf /tmp/*
+                exit 1
+            fi
         else
             echo "DepotDownloader is up-to-date. Continuing launch..."
         fi
     else
         echo "DepotDownloader not found. Installing DepotDownloader..."
+
         # Create a temporary directory for download
         cd /tmp
+
         # Download DepotDownloader from the provided URL
         curl -sSL -o DepotDownloader.zip https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.6.0/DepotDownloader-linux-x64.zip
+
         # Unzip the DepotDownloader package to /home/container
-        unzip DepotDownloader.zip -d /home/container
-        # Set permissions
-        chmod +x /home/container/DepotDownloader
-        # Clean up temporary files
-        rm -rf /tmp/*
-        Warn "DepotDownloader installation completed successfully. We need to restart your system in order to complete the install..."
-        exit 0
+        if unzip DepotDownloader.zip -d /home/container; then
+            # Set permissions
+            chmod +x /home/container/DepotDownloader
+
+            # Clean up temporary files
+            rm -rf /tmp/*
+
+            Warn "DepotDownloader installation completed successfully. We need to restart your system in order to complete the install..."
+            exit 0
+        else
+            echo "Failed to unzip DepotDownloader. Exiting."
+            rm -rf /tmp/*
+            exit 1
+        fi
     fi
 fi
 
