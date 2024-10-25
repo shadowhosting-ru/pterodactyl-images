@@ -30,9 +30,15 @@ fi
 
 if [[ "${DOWNLOAD_METHOD}" == "Depot Downloader" ]]; then
     DEPOTDOWNLOADER_DIR="/home/container/DepotDownloader"
+    VERSION_FILE="/home/container/depotdownloader_version"
     if [ -f "${DEPOTDOWNLOADER_DIR}" ]; then
         echo "DepotDownloader found. Checking for updates..."
-        INSTALLED_VERSION=$(${DEPOTDOWNLOADER_DIR} -version 2>&1 | grep -oP '\d+\.\d+\.\d+')
+        if [ -f "$VERSION_FILE" ]; then
+            INSTALLED_VERSION=$(cat "$VERSION_FILE")
+        else
+            INSTALLED_VERSION=$(${DEPOTDOWNLOADER_DIR} -version 2>&1 | grep -oP '\d+\.\d+\.\d+')
+            echo "$INSTALLED_VERSION" > "$VERSION_FILE"
+        fi
         LATEST_VERSION=$(curl -s https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest | grep 'tag_name' | cut -d '"' -f 4 | sed 's/DepotDownloader_//')
         echo "Installed version: $INSTALLED_VERSION"
         echo "Latest version: $LATEST_VERSION"
@@ -43,6 +49,7 @@ if [[ "${DOWNLOAD_METHOD}" == "Depot Downloader" ]]; then
             if unzip -o DepotDownloader.zip -d /home/container; then
                 rm -rf /tmp/*
                 chmod +x /home/container/DepotDownloader
+                echo "$LATEST_VERSION" > "$VERSION_FILE"
                 Warn "DepotDownloader updated to version $LATEST_VERSION. We need to restart your system in order to complete the install..."
                 exit 0
             else
@@ -59,6 +66,7 @@ if [[ "${DOWNLOAD_METHOD}" == "Depot Downloader" ]]; then
         curl -sSL -o DepotDownloader.zip https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.6.0/DepotDownloader-linux-x64.zip
         if unzip -o DepotDownloader.zip -d /home/container; then
             chmod +x /home/container/DepotDownloader
+            echo "2.6.0" > "$VERSION_FILE"
             rm -rf /tmp/*
             Warn "DepotDownloader installation completed successfully. We need to restart your system in order to complete the install..."
             exit 0
