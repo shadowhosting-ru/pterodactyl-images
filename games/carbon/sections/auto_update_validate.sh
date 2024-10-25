@@ -28,55 +28,52 @@ fi
 # DOWNLOAD AND CLEANUP DOWNLOAD METHOD #
 ########################################
 
-# Define the DepotDownloader version check URL
-GITHUB_API_URL="https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest"
-
-# Fetch the latest version number from GitHub
-LATEST_VERSION=$(curl -s "${GITHUB_API_URL}" | grep -oP '"tag_name": "\K(.*)(?=")')
-LATEST_VERSION=$(echo "$LATEST_VERSION" | xargs)  # Trim any extra whitespace
-
-# Check the installed version by running DepotDownloader with a version flag
-if [ -f /home/container/DepotDownloader ]; then
-    CURRENT_VERSION=$(/home/container/DepotDownloader --version 2>&1 | grep -oP '\d+\.\d+\.\d+')
-    CURRENT_VERSION=$(echo "$CURRENT_VERSION" | xargs)  # Trim any extra whitespace
-else
-    CURRENT_VERSION="none"  # Indicator for a fresh installation
-fi
-
-# Print versions for debugging
-echo "Detected Current Version: $CURRENT_VERSION"
-echo "Latest Version from GitHub: $LATEST_VERSION"
-
-DOWNLOAD_URL="https://github.com/SteamRE/DepotDownloader/releases/download/${LATEST_VERSION}/DepotDownloader-linux-x64.zip"
-
 if [[ "${DOWNLOAD_METHOD}" == "Depot Downloader" ]]; then
-    # Check if ./DepotDownloader already exists
-    if [ -f /home/container/DepotDownloader ]; then
-        echo "DepotDownloader found."
+    DEPOTDOWNLOADER_DIR="/home/container/DepotDownloader"
 
-        # Check if the current version matches the latest version
-        if [[ "$CURRENT_VERSION" == "$LATEST_VERSION" ]]; then
-            echo "DepotDownloader is up-to-date. No installation needed."
-        else
-            echo "DepotDownloader is outdated. Updating to version ${LATEST_VERSION}..."
-            # Proceed with download and installation of the new version
+    # Check if DepotDownloader already exists
+    if [ -f "${DEPOTDOWNLOADER_DIR}" ]; then
+        echo "DepotDownloader found. Checking for updates..."
+
+        # Get the current installed version using the -version tag
+        INSTALLED_VERSION=$(${DEPOTDOWNLOADER_DIR} -version 2>&1 | grep -oP '\d+\.\d+\.\d+')
+
+        # Get the latest release version from GitHub
+        LATEST_VERSION=$(curl -s https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest | grep 'tag_name' | cut -d '"' -f 4 | sed 's/DepotDownloader_//')
+
+        echo "Installed version: $INSTALLED_VERSION"
+        echo "Latest version: $LATEST_VERSION"
+
+        if [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
+            echo "Newer version available. Updating DepotDownloader..."
+            # Create a temporary directory for download
             cd /tmp
-            curl -sSL -o DepotDownloader.zip "$DOWNLOAD_URL"
-            unzip -o DepotDownloader.zip -d /home/container
+            # Download the latest version of DepotDownloader
+            curl -sSL -o DepotDownloader.zip https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_${LATEST_VERSION}/DepotDownloader-linux-x64.zip
+            # Unzip the DepotDownloader package to /home/container
+            unzip DepotDownloader.zip -d /home/container
+            # Clean up temporary files
             rm -rf /tmp/*
+            # Set permissions
             chmod +x /home/container/DepotDownloader
-            echo "DepotDownloader updated successfully to version ${LATEST_VERSION}."
+            Warn "DepotDownloader updated to version $LATEST_VERSION. We need to restart your system in order to complete the install..."
             exit 0
+        else
+            echo "DepotDownloader is up-to-date. Continuing launch..."
         fi
     else
         echo "DepotDownloader not found. Installing DepotDownloader..."
-        # Install the latest version if it doesn't exist
+        # Create a temporary directory for download
         cd /tmp
-        curl -sSL -o DepotDownloader.zip "$DOWNLOAD_URL"
+        # Download DepotDownloader from the provided URL
+        curl -sSL -o DepotDownloader.zip https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.6.0/DepotDownloader-linux-x64.zip
+        # Unzip the DepotDownloader package to /home/container
         unzip DepotDownloader.zip -d /home/container
-        rm -rf /tmp/*
+        # Set permissions
         chmod +x /home/container/DepotDownloader
-        echo "DepotDownloader installation completed successfully."
+        # Clean up temporary files
+        rm -rf /tmp/*
+        Warn "DepotDownloader installation completed successfully. We need to restart your system in order to complete the install..."
         exit 0
     fi
 fi
