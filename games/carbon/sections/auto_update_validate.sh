@@ -33,13 +33,19 @@ GITHUB_API_URL="https://api.github.com/repos/SteamRE/DepotDownloader/releases/la
 
 # Fetch the latest version number from GitHub
 LATEST_VERSION=$(curl -s "${GITHUB_API_URL}" | grep -oP '"tag_name": "\K(.*)(?=")')
+LATEST_VERSION=$(echo "$LATEST_VERSION" | xargs)  # Trim any extra whitespace
 
 # Check the installed version by running DepotDownloader with a version flag
 if [ -f /home/container/DepotDownloader ]; then
-    CURRENT_VERSION=$(/home/container/DepotDownloader --version | grep -oP 'DepotDownloader\s\K(.*)')
+    CURRENT_VERSION=$(/home/container/DepotDownloader --version 2>&1 | grep -oP '\d+\.\d+\.\d+')
+    CURRENT_VERSION=$(echo "$CURRENT_VERSION" | xargs)  # Trim any extra whitespace
 else
     CURRENT_VERSION="none"  # Indicator for a fresh installation
 fi
+
+# Print versions for debugging
+echo "Detected Current Version: $CURRENT_VERSION"
+echo "Latest Version from GitHub: $LATEST_VERSION"
 
 DOWNLOAD_URL="https://github.com/SteamRE/DepotDownloader/releases/download/${LATEST_VERSION}/DepotDownloader-linux-x64.zip"
 
