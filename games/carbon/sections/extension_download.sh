@@ -71,7 +71,7 @@ if [ "${RUSTEDIT_EXT}" == "1" ] || [ "${DISCORD_EXT}" == "1" ] || [ "${CHAOS_EXT
                 Debug "Статус: ${status}"
                 if [ "${status}" == "1" ]; then
                     Debug "Загружаю расширение NoSteam by Kaidoz"
-                    curl -sSL -o /home/container/temp/NoSteam.dll https://github.com/BluetoothWiFi/nosteam/raw/main/NoSteam.dll
+                    curl -sSL -o /home/container/temp/NoSteam.dll https://github.com/shadowhosting-ru/Kaidoz_Rust-NoSteam/raw/refs/heads/main/NoSteam.dll
                     Success "Расширение NoSteam было загружено!"
                 else
                     other_status=$( cat /home/container/share/nosteam/status_carbon.txt )
