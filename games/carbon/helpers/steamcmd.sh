@@ -18,7 +18,7 @@ else
     mkdir -p /home/container/steamcmd
     curl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
     tar -xzvf steamcmd.tar.gz -C /home/container/steamcmd
-    mkdir -p /home/containersteamapps # Fix steamcmd disk write error when this folder is missing
+    mkdir -p /home/container/steamapps # Fix steamcmd disk write error when this folder is missing
     # SteamCMD fails otherwise for some reason, even running as root.
     # This is changed at the end of the install process anyways.
     
