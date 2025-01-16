@@ -11,6 +11,31 @@ Debug "Inside /helpers/steamcmd.sh file!"
 
 Info "Sourcing SteamCMD Script..."
 
+# SteamCMD is required for the server to boot up, check that its installed
+if [ -d /home/container/steamcmd ]; then
+    echo "SteamCMD found. Skipping installation."
+else
+    mkdir -p /home/container/steamcmd
+    curl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+    tar -xzvf steamcmd.tar.gz -C /home/container/steamcmd
+    mkdir -p /home/containersteamapps # Fix steamcmd disk write error when this folder is missing
+    # SteamCMD fails otherwise for some reason, even running as root.
+    # This is changed at the end of the install process anyways.
+    
+    ## set up 32 bit libraries
+    mkdir -p /home/container/.steam/sdk32
+    cp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so
+    ## set up 64 bit libraries
+    mkdir -p /home/container/.steam/sdk64
+    cp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so
+    Warn "SteamCMD installation completed successfully, restarting server to apply changes..."
+    exit 1
+fi
+
+# If RustDedicated does not have the permissions, give it permissions
+if [ "$(stat -c "%a" /home/container/RustDedicated)" -ne 755 ]; then
+    chmod +x /home/container/RustDedicated
+fi
 # We need to delete the steamapps directory in order to prevent the following error:
 # Error! App '258550' state is 0x486 after update job.
 # Ref: https://www.reddit.com/r/playark/comments/3smnog/error_app_376030_state_is_0x486_after_update_job/
